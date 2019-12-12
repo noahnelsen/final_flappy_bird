@@ -1,0 +1,249 @@
+"""LAB 12 """
+
+import arcade
+import random
+
+SCREEN_WIDTH = 501
+SCREEN_HEIGHT = 501
+SPRITE_SCALING_WALL = .2
+SPRITE_SCALING_BIRD = .2
+
+
+def buildings(x, y):
+    arcade.draw_rectangle_filled(x, y, 25, 100, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(x + 60, y, 50, 100, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(x + 120, y, 50, 200, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(200, y, 50, 200, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(260, y, 50, 150, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(320, y, 50, 250, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(400, y, 50, 100, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(460, y, 60, 75, arcade.color.DARK_GRAY)
+    arcade.draw_rectangle_filled(520, y, 50, 100, arcade.color.DARK_GRAY)
+
+
+def tree_line(x, y):
+    arcade.draw_circle_filled(x - 250, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_circle_filled(x - 150, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_circle_filled(x - 50, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_circle_filled(x + 50, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_circle_filled(x + 150, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_circle_filled(x + 250, y + 10, 25, arcade.color.LIGHT_GREEN)
+    arcade.draw_rectangle_filled(x, y, SCREEN_WIDTH, 50, arcade.color.LIGHT_GREEN)
+
+
+def create_cloud(x, y):
+    shape_list = arcade.ShapeElementList()
+    shape = arcade.create_ellipse_filled(x, y, 15, 15, arcade.color.WHITE_SMOKE)
+    shape_list.append(shape)
+    shape = arcade.create_ellipse_filled(x + 10, y, 15, 15, arcade.color.WHITE_SMOKE)
+    shape_list.append(shape)
+    shape = arcade.create_ellipse_filled(x - 10, y, 20, 20, arcade.color.WHITE_SMOKE)
+    shape_list.append(shape)
+    shape = arcade.create_ellipse_filled(x - 20, y + 5, 15, 15, arcade.color.WHITE_SMOKE)
+    shape_list.append(shape)
+    shape = arcade.create_ellipse_filled(x - 30, y, 15, 15, arcade.color.WHITE_SMOKE)
+    shape_list.append(shape)
+
+    return shape_list
+
+
+def cloud(x, y):
+    arcade.draw_circle_filled(x, y, 15, arcade.color.WHITE_SMOKE)
+    arcade.draw_circle_filled(x + 10, y, 15, arcade.color.WHITE_SMOKE)
+    arcade.draw_circle_filled(x - 10, y, 20, arcade.color.WHITE_SMOKE)
+    arcade.draw_circle_filled(x - 20, y, 15, arcade.color.WHITE_SMOKE)
+    arcade.draw_circle_filled(x - 30, y, 15, arcade.color.WHITE_SMOKE)
+
+
+def bottom_border(x):
+    arcade.draw_rectangle_filled(x, 0, SCREEN_WIDTH, 175, arcade.color.TAN)
+
+
+def top_border(x):
+    arcade.draw_rectangle_filled(x, 500, SCREEN_WIDTH, 125, arcade.color.TAN)
+
+
+def text():
+    arcade.draw_text("Flappy Bird", 150, 25, arcade.color.BLACK, 36)
+
+
+class BottomWall(arcade.Sprite):
+    def __init__(self, filename, sprite_scaling):
+
+        super().__init__(filename, sprite_scaling)
+        self.change_x = 0
+        self.change_y = 0
+
+    def update(self):
+        self.center_x -= 25
+
+        if self.center_x < -50:
+            self.center_y = random.randrange(75, 150)
+            self.center_x = 600
+
+
+class TopWall(arcade.Sprite):
+    def __init__(self, filename, sprite_scaling):
+
+        super().__init__(filename, sprite_scaling)
+        self.change_x = 0
+        self.change_y = 0
+
+    def update(self):
+        self.center_x -= 25
+
+        if self.center_x < -50:
+            self.center_y = random.randrange(375, 450)
+            self.center_x = 600
+
+
+class Bird(arcade.Sprite):
+    def __init__(self, filename, sprite_scaling):
+        super().__init__(filename, sprite_scaling)
+        self.change_x = 0
+        self.change_y = 0
+
+    def update(self):
+        self.center_y -= 10
+
+
+class MenuView(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BABY_BLUE)
+
+    def on_draw(self):
+        arcade.start_render()
+        buildings(10, 125)
+        tree_line(250, 100)
+        bottom_border(250)
+        top_border(250)
+        cloud(250, 400)
+        cloud(400, 375)
+        cloud(120, 425)
+        cloud(450, 275)
+        cloud(50, 275)
+        cloud(225, 375)
+
+        arcade.draw_text("Flappy", SCREEN_WIDTH / 2, 425,
+                         arcade.color.BLACK, 64, anchor_x="center")
+        arcade.draw_text("Bird", SCREEN_WIDTH / 2, 325,
+                         arcade.color.BLACK, 64, anchor_x="center")
+        arcade.draw_text("Press Space Bar to pass the pipes", SCREEN_WIDTH / 2, 200,
+                         arcade.color.BLACK, 20, anchor_x="center")
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 150,
+                         arcade.color.GRAY, 20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        game_play = MyGame()
+        game_play.setup()
+        self.window.show_view(game_play)
+
+
+class MyGame(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+        self.bottom_wall_list = None
+        self.top_wall_list = None
+        self.bird_list = None
+
+        self.bottom_sprite = None
+        self.top_sprite = None
+        self.bird_sprite = None
+
+        self.cloud1 = create_cloud(250, 400)
+        self.cloud2 = create_cloud(120, 425)
+        self.cloud3 = create_cloud(400, 375)
+        self.cloud4 = create_cloud(450, 275)
+        self.cloud5 = create_cloud(50, 275)
+        self.cloud6 = create_cloud(225, 375)
+
+    def setup(self):
+        self.bottom_wall_list = arcade.SpriteList()
+        self.top_wall_list = arcade.SpriteList()
+        self.bird_list = arcade.SpriteList()
+
+        self.score = 0
+
+        self.bottom_sprite = BottomWall("a37ba11f46bd745.png", SPRITE_SCALING_WALL)
+        # image from pixelart.com
+        self.bottom_sprite.center_x = 500
+        self.bottom_sprite.center_y = 100
+        self.bottom_wall_list.append(self.bottom_sprite)
+
+        self.top_sprite = TopWall("a37ba11f46bd746.png", SPRITE_SCALING_WALL)
+        # image from pixelart.com
+        self.top_sprite.center_x = 500
+        self.top_sprite.center_y = 400
+        self.top_wall_list.append(self.top_sprite)
+
+        self.bird_sprite = Bird("FlappyBird.png", SPRITE_SCALING_BIRD)
+        # image from cleanpng.com
+        self.bird_sprite.center_x = 200
+        self.bird_sprite.center_y = 300
+        self.bird_list.append(self.bird_sprite)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.set_background_color(arcade.color.BABY_BLUE)
+        self.cloud1.draw()
+        self.cloud2.draw()
+        self.cloud3.draw()
+        self.cloud4.draw()
+        self.cloud5.draw()
+        self.cloud6.draw()
+
+        buildings(10, 125)
+        tree_line(250, 100)
+
+        self.bottom_wall_list.draw()
+        self.top_wall_list.draw()
+        self.bird_list.draw()
+
+        bottom_border(250)
+        top_border(250)
+        text()
+
+        output = f"Score: {self.score}"
+        arcade.draw_text(output, 200, 450, arcade.color.BLACK, 14)
+
+        if len(self.bottom_wall_list) == 0 or len(self.top_wall_list) == 0 \
+                or self.bird_sprite.center_y > self.top_sprite.center_y + 50\
+                or self.bird_sprite.center_y < self.bottom_sprite.center_y - 50:
+            game_over = "Game Over"
+            arcade.draw_text(game_over, 150, 250, arcade.color.WHITE, 36)
+
+    def update(self, delta_time):
+        if len(self.bottom_wall_list) != 0 and len(self.top_wall_list) != 0 \
+                and self.top_sprite.center_y + 50 > self.bird_sprite.center_y > self.bottom_sprite.center_y - 50:
+            self.bottom_wall_list.update()
+            self.bird_list.update()
+            self.top_wall_list.update()
+
+            if self.bird_sprite.center_x == self.top_sprite.center_x + 50:
+                self.score += 1
+
+        hit_list = arcade.check_for_collision_with_list(self.bird_sprite, self.top_wall_list)
+        for self.top_sprite in hit_list:
+            self.top_sprite.remove_from_sprite_lists()
+
+        hit_list = arcade.check_for_collision_with_list(self.bird_sprite, self.bottom_wall_list)
+        for self.bottom_sprite in hit_list:
+            self.bottom_sprite.remove_from_sprite_lists()
+
+    def on_key_press(self, key, modifiers):
+        if len(self.bottom_wall_list) != 0 and len(self.top_wall_list) != 0 \
+                and self.top_sprite.center_y + 50 > self.bird_sprite.center_y > self.bottom_sprite.center_y - 50:
+            if key == arcade.key.SPACE:
+                self.bird_sprite.center_y += 75
+
+
+def main():
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "Flappy Bird")
+    window.total_score = 0
+    menu_view = MenuView()
+    window.show_view(menu_view)
+    arcade.run()
+
+
+main()
